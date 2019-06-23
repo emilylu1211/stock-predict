@@ -13,7 +13,7 @@ import math
 # split the data into training and test
 split_ratio = 0.90
 # how many previous days as input
-steps = 60
+steps = 20
 # how many inputs
 num_input = 1
 symbol = '^GSPC'
