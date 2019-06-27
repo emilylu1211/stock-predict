@@ -15,7 +15,7 @@ split_ratio = 0.90
 # how many previous days as input
 steps = 20
 # how many inputs
-num_input = 1
+num_input =5
 symbol = '^GSPC'
 
 
@@ -41,13 +41,17 @@ def main():
     # use pandas to read csv file
     # result is a 2D data structure with labels
     data = pd.read_csv('./data/' + symbol + '.csv')
+    open2 = scale_data(data.Open)
+    high = scale_data(data.High)
+    low = scale_data(data.Low)
+    volume = scale_data(data.Volume)
     adjclose = scale_data(data.AdjClose)
 
     # process the data to input and output
     # X is input, 1D with n * steps * num_input elements
     # y is output, 1D with n elements
-    X, y = processData(adjclose, steps)
-
+    #X, y = processData(adjclose, steps)
+    X, y = processData5(open2, high, low, volume, adjclose, steps)
     # split the data into 90% for train and testing
     # split_point has to be an integer so use //
     splity = int(len(y) * split_ratio)
@@ -89,9 +93,11 @@ def main():
 
 
     # how is predicted comapred with actual?
-    testScore = mean_absolute_percentage_error(y_test, y_predicted)
+    # we also want to see first half and second half test score
+    testScore, testScore2, testScore3 = mean_absolute_percentage_error(y_test, y_predicted)
     print('Test Score: %.2f MAPE' % (testScore))  # Root Mean Square Error,
-
+    print('Test Score 2: %.2f MAPE' % (testScore2))
+    print('Test Score 3: %.2f MAPE' % (testScore3))
     # draw it
     # y_test and y_predicted are still in 0 - 1 so we need to call inverse_transform
     # to change them into real prices
@@ -108,22 +114,53 @@ def main():
 # then there will be 4980 * 20 elements for X and 4980 elements for Y
 def processData(data,lb):
     X,Y = [],[]
-    for i in range(len(data)-lb-1):
+
+    for i in range(len(data)-lb):
         for j in range(lb):
             X.append(data[i+j])
         Y.append(data[(i+lb),0])
     return np.array(X),np.array(Y)
 
 
+#5 input, one output
+#look back days = 20
+def processData5(open2, high, low, volume, data, lb):
+    X,Y = [],[]
+    for i in range(len(data)-lb):
+        for j in range(lb):
+            X.append(open2[i+j])
+            X.append(high[i+j])
+            X.append(low[i+j])
+            X.append(volume[i+j])
+            X.append(data[i+j])
+        Y.append(data[(i+lb),0])
+    return np.array(X),np.array(Y)
+
+
+
+
+
+
+
 def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     diff = []
+    diff2 = []
+    diff3 = []
     for i in range(len(y_true)):
         #print("%.3f, %.3f, %.3f"%(y_true[i], y_pred[i], np.abs((y_true[i] - y_pred[i]) / y_true[i])))
         diff.append(np.abs((y_true[i] - y_pred[i]) / y_true[i]))
+        if i < len(y_true)/2:
+            diff2.append(np.abs((y_true[i] - y_pred[i]) / y_true[i]))
+        else:
+            diff3.append(np.abs((y_true[i] - y_pred[i]) / y_true[i]))
+
     #return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
     mymean = np.mean(diff)
-    return  mymean * 100
+    mymean2 = np.mean(diff2)
+    mymean3 = np.mean(diff3)
+    return  mymean * 100, mymean2 * 100, mymean3 * 100
 
 
 if __name__ == '__main__':
