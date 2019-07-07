@@ -7,6 +7,8 @@ from keras.layers import LSTM,Dense
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerLine2D
+import os
+
 import math
 # Input data files are available in the "data/" directory.
 
@@ -34,24 +36,68 @@ def scale_data(myinput):
     return result
 
 
-def main():
+def main_multi_files():
+    global num_input
 
-    num_elements_one_input = steps * num_input
+    #list files from data
+    path = './data'
+
+    common_start_date = ''
+    files = []
+    filelist = os.listdir(path)
+    for file in filelist:
+        if '.csv' in file:
+            files.append(file)
+            # print(file)
+            df = pd.read_csv('./data/' + file, usecols = ["Date"])
+            mydate = df.Date[0]
+            if mydate > common_start_date:
+                common_start_date = mydate
+
+    print(common_start_date)
+    print("number of files %d"%(len(files)))
 
     # use pandas to read csv file
     # result is a 2D data structure with labels
     data = pd.read_csv('./data/' + symbol + '.csv')
+    data = data[data.Date >= common_start_date]
     open2 = scale_data(data.Open)
     high = scale_data(data.High)
     low = scale_data(data.Low)
     volume = scale_data(data.Volume)
+    dates = data.Date
+    dates = dates.tolist()
+
+    lenth_GRPC = len(data.AdjClose)
+    print("lenth_GRPC = %d"%(lenth_GRPC))
+    mydata = []
+    for file in files:
+        if ("^GSPC" in file) == False:
+            df = pd.read_csv('./data/' + file, usecols = ["Date","AdjClose"])
+            df = df[df.Date >= common_start_date]
+            myclose = scale_data(df.AdjClose)
+            if len(myclose) != lenth_GRPC:
+                print("%s, len = %d"%(file, len(myclose)))
+            mydata.append(myclose)
+
+
     adjclose = scale_data(data.AdjClose)
+
+
+    lenth_otherclose = len(mydata)
+    num_input = num_input + lenth_otherclose
+
+    print("num_input=%d"%(num_input))
+
+    num_elements_one_input = steps * num_input
 
     # process the data to input and output
     # X is input, 1D with n * steps * num_input elements
     # y is output, 1D with n elements
     #X, y = processData(adjclose, steps)
-    X, y = processData5(open2, high, low, volume, adjclose, steps)
+    X, y, z = processData_multi(open2, high, low, volume, adjclose, steps, dates, mydata)
+
+
     # split the data into 90% for train and testing
     # split_point has to be an integer so use //
     splity = int(len(y) * split_ratio)
@@ -61,6 +107,7 @@ def main():
     # :splitx = [0, splitx), splitx: = [splitx, len(X))
     X_train, X_test = X[:splitx], X[splitx:]
     y_train,y_test = y[:splity],y[splity:]
+    Z_test = z[splity:]
 
     #print first data slice
     print(X_train.shape[0])
@@ -103,11 +150,91 @@ def main():
     # to change them into real prices
     # as before, scl needs to work on 2D,
     # reshape(-1, 1) will do the trick, -1 means it will calculate for us
-    line1, = plt.plot(scl.inverse_transform(y_test.reshape(-1,1)),  marker='d', label='Actual')
-    line2, = plt.plot(scl.inverse_transform(y_predicted.reshape(-1,1)), marker='o', label='Predicted')
+    line1, = plt.plot(Z_test, scl.inverse_transform(y_test.reshape(-1,1)),  marker='d', label='Actual')
+    line2, = plt.plot(Z_test, scl.inverse_transform(y_predicted.reshape(-1,1)), marker='o', label='Predicted')
     plt.legend(handler_map={line1: HandlerLine2D(numpoints=4)})
     plt.Text(symbol)
     plt.show()
+
+
+def main():
+    num_elements_one_input = steps * num_input
+
+    # use pandas to read csv file
+    # result is a 2D data structure with labels
+    data = pd.read_csv('./data/' + symbol + '.csv')
+    open2 = scale_data(data.Open)
+    high = scale_data(data.High)
+    low = scale_data(data.Low)
+    volume = scale_data(data.Volume)
+    adjclose = scale_data(data.AdjClose)
+    dates = data.Date
+
+    # process the data to input and output
+    # X is input, 1D with n * steps * num_input elements
+    # y is output, 1D with n elements
+    #X, y = processData(adjclose, steps)
+    X, y, z = processData5(open2, high, low, volume, adjclose, steps, dates)
+
+    # split the data into 90% for train and testing
+    # split_point has to be an integer so use //
+    splity = int(len(y) * split_ratio)
+    # remember that for each output element there are num_elements_one_input
+    splitx = int(splity * num_elements_one_input)
+
+    # :splitx = [0, splitx), splitx: = [splitx, len(X))
+    X_train, X_test = X[:splitx], X[splitx:]
+    y_train,y_test = y[:splity],y[splity:]
+    Z_test = z[splity:]
+
+    #print first data slice
+    print(X_train.shape[0])
+    print(X_test.shape[0])
+    print(y_train.shape[0])
+    print(y_test.shape[0])
+
+    print(X_train[0])
+    print(X_test[0])
+
+    #Build the model
+    model = Sequential()
+    # Add one layer of LSTM with 256 tensors
+    model.add(LSTM(256,input_shape=(steps,num_input)))
+    # Dense is for output layer
+    model.add(Dense(1))
+    # optimizer is the gradient descent algorithm
+    # mse is the most popular loss function
+    model.compile(optimizer='adam',loss='mse')
+
+    # reshape input from 1D array to 3D so model can use
+    X_train = X_train.reshape((len(X_train) // num_elements_one_input, steps, num_input))
+    X_test = X_test.reshape((len(X_test) // num_elements_one_input, steps, num_input))
+
+    # train the model
+    model.fit(X_train,y_train,epochs=10,validation_data=(X_test,y_test),shuffle=False)
+
+    # train completed, let's do predict
+    y_predicted = model.predict(X_test)
+
+
+    # how is predicted comapred with actual?
+    # we also want to see first half and second half test score
+    testScore, testScore2, testScore3 = mean_absolute_percentage_error(y_test, y_predicted)
+    print('Test Score: %.2f MAPE' % (testScore))  # Root Mean Square Error,
+    print('Test Score 2: %.2f MAPE' % (testScore2))
+    print('Test Score 3: %.2f MAPE' % (testScore3))
+    # draw it
+    # y_test and y_predicted are still in 0 - 1 so we need to call inverse_transform
+    # to change them into real prices
+    # as before, scl needs to work on 2D,
+    # reshape(-1, 1) will do the trick, -1 means it will calculate for us
+    line1, = plt.plot(Z_test, scl.inverse_transform(y_test.reshape(-1,1)),  marker='d', label='Actual')
+    line2, = plt.plot(Z_test, scl.inverse_transform(y_predicted.reshape(-1,1)), marker='o', label='Predicted')
+    plt.legend(handler_map={line1: HandlerLine2D(numpoints=4)})
+    plt.Text(symbol)
+    plt.show()
+
+
 
 # one input and one output
 # if data has 5000 elements and look back days is 20
@@ -124,8 +251,8 @@ def processData(data,lb):
 
 #5 input, one output
 #look back days = 20
-def processData5(open2, high, low, volume, data, lb):
-    X,Y = [],[]
+def processData5(open2, high, low, volume, data, lb, dates):
+    X,Y,Z = [],[],[]
     for i in range(len(data)-lb):
         for j in range(lb):
             X.append(open2[i+j])
@@ -133,8 +260,28 @@ def processData5(open2, high, low, volume, data, lb):
             X.append(low[i+j])
             X.append(volume[i+j])
             X.append(data[i+j])
-        Y.append(data[(i+lb),0])
-    return np.array(X),np.array(Y)
+        Y.append(data[(i+lb)])
+        Z.append(dates[(i+lb)])
+    return np.array(X),np.array(Y),np.array(Z)
+
+
+def processData_multi(open1, high1, low1, volume1, close1, lb, dates1, othercloses):
+    X,Y,Z = [],[],[]
+    for i in range(len(close1)-lb):
+        for j in range(lb):
+            X.append(open1[i+j])
+            X.append(high1[i+j])
+            X.append(low1[i+j])
+            X.append(volume1[i+j])
+            X.append(close1[i+j])
+            lenth_other_symbols = len(othercloses)
+            for k in range(lenth_other_symbols):
+                otherclose = othercloses[k]
+                lenth_num_dates = len(otherclose)
+                X.append(otherclose[i+j])
+        Y.append(close1[(i+lb)])
+        Z.append(dates1[(i+lb)])
+    return np.array(X),np.array(Y),np.array(Z)
 
 
 
@@ -164,4 +311,4 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 
 if __name__ == '__main__':
-    main()
+    main_multi_files()

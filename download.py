@@ -1,8 +1,12 @@
 #!/usr/bin/python
 
 import requests
+import time
+import os
+import os.path
 import json
 from datetime import datetime, timedelta
+import pandas as pd
 
 
 # Range format "&from=1547524844&to=1557283610&events=quote&interval=1d"
@@ -68,4 +72,32 @@ def download_history(symbol, days_to_subtract):
     file.close()
 
 
-download_history('^GSPC', 8000)
+download_history('^GSPC', 10000)
+download_history('MSFT', 10000)
+download_history('GM', 10000)
+download_history('AMZN', 10000)
+
+def sp500(sp_list):
+    data = pd.read_csv(sp_list)
+    symbols = data.Symbol
+    symbols = symbols.tolist()
+
+    for idx, symbol in enumerate(symbols):
+        out_name = os.path.join("./data/", symbol + ".csv")
+        if os.path.exists(out_name):
+            print("%d, %s already downloaded, skip" % (idx, symbol))
+            continue
+
+        download_history(symbol, 10000)
+        print("%d, %s downloaded" % (idx, symbol))
+
+        if idx >= 499:
+            break
+
+        time.sleep(2)
+
+    print("\n\nALL DOWNLOADED!!!")
+
+
+
+# sp500("./sp_list.csv")

@@ -1,0 +1,29 @@
+split_ratio = 0.90
+# how many previous days as input
+steps = 20
+# how many inputs
+num_input = 1
+symbol = '^GSPC'
+
+Test Score: 1.18 MAPE
+Test Score 2: 0.87 MAPE #first half
+Test Score 3: 1.50 MAPE  #2nd half
+
+split_ratio = 0.90
+# how many previous days as input
+steps = 20
+# how many inputs
+num_input =5
+symbol = '^GSPC'
+Test Score: 1.05 MAPE
+Test Score 2: 0.84 MAPE
+Test Score 3: 1.26 MAPE
+
+split_ratio = 0.90
+# how many previous days as input
+steps = 20
+# how many inputs
+num_input =5 + 165 tope symbols
+Test Score: 2.18 MAPE
+Test Score 2: 1.37 MAPE
+Test Score 3: 2.99 MAPE
