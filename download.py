@@ -32,7 +32,7 @@ def download_history(symbol, days_to_subtract):
     myrange = get_range(days_to_subtract)
     URL = base_url + symbol + myrange
     # API needs the following headers
-    headers = {'X-RapidAPI-Host': 'apidojo-yahoo-finance-v1.p.rapidapi.com', 'X-RapidAPI-Key': '3311a21364mshefcbf67f19c7e8dp1a7eecjsnf32f9cfa6350'}
+    headers = {'X-RapidAPI-Host': 'apidojo-yahoo-finance-v1.p.rapidapi.com', 'X-RapidAPI-Key': 'api key'}
 
     # get the data from yahoo api pages
     #r = response
@@ -73,9 +73,9 @@ def download_history(symbol, days_to_subtract):
 
 
 download_history('^GSPC', 10000)
-download_history('MSFT', 10000)
-download_history('GM', 10000)
-download_history('AMZN', 10000)
+#download_history('MSFT', 10000)
+#download_history('GM', 10000)
+#download_history('AMZN', 10000)
 
 def sp500(sp_list):
     data = pd.read_csv(sp_list)
