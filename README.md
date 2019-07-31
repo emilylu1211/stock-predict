@@ -3,16 +3,16 @@
 ### Motivation
 Search engines, autonomous vehicles, and image recognition— all made possible by the fascinating malleability of deep learning. Inspired in part by our very own brains, deep learning relies on artificial neural networks interconnected by layers upon layers of nodes. It’s this complex web of artificial networks that makes contemporary technology so adaptable. For evaluating stock prices, pricing models have to be flexible to an environment where market trends and discrete data sets are constantly fluctuating. 
 
-This project relies on TensorFlow, an open source Python library, What this project hopes to develop then is a stock price prediction model of the S&P 500 that sufficiently follows these patterns. To determine the optimal stock pricing model, multiple input variables, models, etc. will be tested to evaluate their impact on overarching accuracy, which is represented by the MAPE (mean absolute percentage error).
+What this project hopes to develop then is a stock price prediction model of the S&P 500 that sufficiently follows these patterns. To determine the optimal stock pricing model, multiple input variables, models, etc. will be tested to evaluate their impact on overarching accuracy, which is represented by the MAPE (mean absolute percentage error).
 
 ### RNN, LSTM, GRU
-What is essential to the function of this deep learning stock model in particular is RNN, or Recurrent Neural Networks. The advantage of RNN lies in modelling time-series, wherein ‘time elapsed’ is a major determinant in the data set (the independent variable, in essence). My stock model relies heavily on a specialized subset model of RNN, called LSTM (Long Short-Term Memory), which shines in accounting for long-term dependencies. In other words, LSTM is capable of recognizing and using long-term data in determining overarching relationships. Another model of importance is GRU (Gated Recurrent Unit), whose function and structure align closely with LSTM.
+What is essential to the function of this deep learning stock model is RNN, or Recurrent Neural Networks. The advantage of RNN lies in modelling time-series, wherein ‘time elapsed’ is a major determinant in the data set (the independent variable, in essence). My stock model relies heavily on a specialized subset model of RNN, called LSTM (Long Short-Term Memory), which shines in accounting for long-term dependencies. In other words, LSTM can recognize and using long-term data in determining overarching relationships. Another model of importance is GRU (Gated Recurrent Unit), whose function and structure align closely with LSTM.
 
 ### Data
-I downloaded 10,000 days worth of S&P 500 Index data (^GSPC) from Yahoo Finance API, hosted by rapidapi.com. The data was downloaded in JSON format, then parsed and converted to the csv file ‘data/^GSPC.csv.’ By running the function ‘download_history()’ in ‘download.py’, I was able to download each individual stock’s data and save it in ‘data/{symbol}.csv.’ Using the ‘sp500()’ function, I was also able to download data for all 500 individual stocks in the S&P 500.
+I downloaded 10,000 days' worth of S&P 500 Index data (^GSPC) from Yahoo Finance API, hosted by rapidapi.com. The data was downloaded in JSON format, then parsed and converted to the csv file ‘data/^GSPC.csv.’ By running the function ‘download_history()’ in ‘download.py’, I was able to download each individual stock’s data and save it in ‘data/{symbol}.csv.’ Using the ‘sp500()’ function, I was also able to download data for all 500 individual stocks in the S&P 500.
 
 ### Python Libraries Used
-Python is the most popular language for machine learning due to the followin reasons:
+Python is the most popular language for machine learning due to the following reasons:
 
 * Python itself is easy to understand and learn.
 * Python has a lot of packages for machine learning and data processing with almost zero learning curve.
@@ -118,11 +118,11 @@ __Original Model: One input (Close price, using data from 20 days in the past); 
 
 Taken together, these results tell us that simply increasing the breadth of data inputs doesn’t necessarily increase accuracy: trial 3 (adding 156 symbols as inputs) used the largest volume of data, but had the highest MAPE of all trials at 2.18. On the other hand, adding in five basic stock inputs through trial 1 generated the second-most accurate stock pricing model, with a MAPE of 1.05. 
 
-To improve upon the logistics of trial 3, it would probably be more helpful to determine which stock data to input by judging the valued weight of each stock to the S&P 500 index instead of the stock’s range of data. In regards to trial 3, which had the lowest MAPE of 1.02, it’s interesting to see how similar models can still generate differences in outcome. Further study of the limits and benefits of each model would definitely be helpful in resolving this front. 
+To improve upon the logistics of trial 3, it would probably be more helpful to determine which stock data to input by judging the valued weight of each stock to the S&P 500 index instead of the stock’s range of data. In regard to trial 3, which had the lowest MAPE of 1.02, it’s interesting to see how similar models can still generate differences in outcome. Further study of the limits and benefits of each model would definitely be helpful in resolving this front. 
 
 As for trial 4, the pattern of ‘more isn’t necessarily better’ is shown through the MAPE of 1.10 as a result of adding a second LSTM layer, as opposed to the MAPE of 1.05 without it. In further trials, I hope to tweak more variable combinations and potentially add more variables (such as P/E ratio and analyst recommendations) to further the precision of the model. 
 
-At the end of the day, though, this model only serves as a short-term visualization of how a stock could trend, and is definitely not indicative of absolute stock prices. But it should be taken as a valuable learning opportunity in delving into the varied uses of AI deep learning, its accessibility, and its endless ability to adapt to changes large and small—just like the human brain, if you think about it.
+At the end of the day, though, this model only serves as a short-term visualization of how a stock could trend and is definitely not indicative of absolute stock prices. But it should be taken as a valuable learning opportunity in delving into the varied uses of AI deep learning, its accessibility, and its endless ability to adapt to changes large and small—just like the human brain, if you think about it.
 
 ### Future Enhancements
 
