@@ -38,26 +38,67 @@ def scale_data(myinput):
 
 
 
+def main_multi_files():
+    global num_input
 
-def main():
-    np.random.seed(5)
-    num_elements_one_input = steps * num_input
+    #list files from data
+    path = './data'
+
+    common_start_date = ''
+    files = []
+    filelist = os.listdir(path)
+    for file in filelist:
+        if '.csv' in file:
+            files.append(file)
+            # print(file)
+            df = pd.read_csv('./data/' + file, usecols = ["Date"])
+            mydate = df.Date[0]
+            if mydate > common_start_date:
+                common_start_date = mydate
+
+    print(common_start_date)
+    print("number of files %d"%(len(files)))
 
     # use pandas to read csv file
     # result is a 2D data structure with labels
     data = pd.read_csv('./data/' + symbol + '.csv')
+    data = data[data.Date >= common_start_date]
     open2 = scale_data(data.Open)
     high = scale_data(data.High)
     low = scale_data(data.Low)
     volume = scale_data(data.Volume)
-    adjclose = scale_data(data.AdjClose)
     dates = data.Date
+    dates = dates.tolist()
+
+    lenth_GRPC = len(data.AdjClose)
+    print("lenth_GRPC = %d"%(lenth_GRPC))
+    mydata = []
+    for file in files:
+        if ("^GSPC" in file) == False:
+            df = pd.read_csv('./data/' + file, usecols = ["Date","AdjClose"])
+            df = df[df.Date >= common_start_date]
+            myclose = scale_data(df.AdjClose)
+            if len(myclose) != lenth_GRPC:
+                print("%s, len = %d"%(file, len(myclose)))
+            mydata.append(myclose)
+
+
+    adjclose = scale_data(data.AdjClose)
+
+
+    lenth_otherclose = len(mydata)
+    num_input = num_input + lenth_otherclose
+
+    print("num_input=%d"%(num_input))
+
+    num_elements_one_input = steps * num_input
 
     # process the data to input and output
     # X is input, 1D with n * steps * num_input elements
     # y is output, 1D with n elements
-    #X, y= processData(adjclose, steps)
-    X, y, z = processData5(open2, high, low, volume, adjclose, steps, dates)
+    #X, y = processData(adjclose, steps)
+    X, y, z = processData_multi(open2, high, low, volume, adjclose, steps, dates, mydata)
+
 
     # split the data into 90% for train and testing
     # split_point has to be an integer so use //
@@ -68,7 +109,7 @@ def main():
     # :splitx = [0, splitx), splitx: = [splitx, len(X))
     X_train, X_test = X[:splitx], X[splitx:]
     y_train,y_test = y[:splity],y[splity:]
-    z_test = z[splity:]
+    Z_test = z[splity:]
 
     #print first data slice
     print(X_train.shape[0])
@@ -81,8 +122,8 @@ def main():
 
     #Build the model
     model = Sequential()
-    # Add one layer of LSTM with 256 tensors
-    model.add(GRU(256,input_shape=(steps,num_input)))
+    model.add(LSTM(256,input_shape=(steps,num_input)))
+
     # Dense is for output layer
     model.add(Dense(1))
     # optimizer is the gradient descent algorithm
@@ -111,42 +152,10 @@ def main():
     # to change them into real prices
     # as before, scl needs to work on 2D,
     # reshape(-1, 1) will do the trick, -1 means it will calculate for us
-    line1, = plt.plot(scl.inverse_transform(y_test.reshape(-1,1)),  marker='d', label='Actual')
-    line2, = plt.plot(scl.inverse_transform(y_predicted.reshape(-1,1)), marker='o', label='Predicted')
+    line1, = plt.plot(Z_test, scl.inverse_transform(y_test.reshape(-1,1)),  marker='d', label='Actual')
+    line2, = plt.plot(Z_test, scl.inverse_transform(y_predicted.reshape(-1,1)), marker='o', label='Predicted')
     plt.legend(handler_map={line1: HandlerLine2D(numpoints=4)})
-    plt.title(symbol+"(" + z_test[0] + " to " + z_test[len(z_test)-1] + ")")
     plt.show()
-
-
-
-# one input and one output
-# if data has 5000 elements and look back days is 20
-# then there will be 4980 * 20 elements for X and 4980 elements for Y
-def processData(data,lb):
-    X,Y = [],[]
-
-    for i in range(len(data)-lb):
-        for j in range(lb):
-            X.append(data[i+j])
-        Y.append(data[(i+lb),0])
-    return np.array(X),np.array(Y)
-
-
-#5 input, one output
-#look back days = 20
-def processData5(open2, high, low, volume, data, lb, dates):
-    X,Y,Z = [],[],[]
-    for i in range(len(data)-lb):
-        for j in range(lb):
-            X.append(open2[i+j])
-            X.append(high[i+j])
-            X.append(low[i+j])
-            X.append(volume[i+j])
-            X.append(data[i+j])
-        Y.append(data[(i+lb)])
-        Z.append(dates[(i+lb)])
-    return np.array(X),np.array(Y),np.array(Z)
-
 
 def processData_multi(open1, high1, low1, volume1, close1, lb, dates1, othercloses):
     X,Y,Z = [],[],[]
@@ -194,4 +203,4 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 
 if __name__ == '__main__':
-    main()
+    main_multi_files()
