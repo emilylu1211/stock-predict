@@ -90,97 +90,6 @@ The parameters that I used for the model are as follows:
 4. Num_layers - The number of layers the model used
 
 
-### ## Predict S&P500 Index Prices Using LSTM 
-
-### Motivation
-Search engines, autonomous vehicles, and image recognition— all made possible by the fascinating malleability of deep learning. Inspired in part by our very own brains, deep learning relies on artificial neural networks interconnected by layers upon layers of nodes. It’s this complex web of artificial networks that makes contemporary technology so adaptable. For evaluating stock prices, pricing models have to be flexible to an environment where market trends and discrete data sets are constantly fluctuating. 
-
-This project relies on TensorFlow, an open source Python library, What this project hopes to develop then is a stock price prediction model of the S&P 500 that sufficiently follows these patterns. To determine the optimal stock pricing model, multiple input variables, models, etc. will be tested to evaluate their impact on overarching accuracy, which is represented by the MAPE (mean absolute percentage error).
-
-### RNN, LSTM, GRU
-What is essential to the function of this deep learning stock model in particular is RNN, or Recurrent Neural Networks. The advantage of RNN lies in modelling time-series, wherein ‘time elapsed’ is a major determinant in the data set (the independent variable, in essence). My stock model relies heavily on a specialized subset model of RNN, called LSTM (Long Short-Term Memory), which shines in accounting for long-term dependencies. In other words, LSTM is capable of recognizing and using long-term data in determining overarching relationships. Another model of importance is GRU (Gated Recurrent Unit), whose function and structure align closely with LSTM.
-
-### Data
-I downloaded 10,000 days worth of S&P 500 Index data (^GSPC) from Yahoo Finance API, hosted by rapidapi.com. The data was downloaded in JSON format, then parsed and converted to the csv file ‘data/^GSPC.csv.’ By running the function ‘download_history()’ in ‘download.py’, I was able to download each individual stock’s data and save it in ‘data/{symbol}.csv.’ Using the ‘sp500()’ function, I was also able to download data for all 500 individual stocks in the S&P 500.
-
-### Python Libraries Used
-Python is the most popular language for machine learning due to the followin reasons:
-
-* Python itself is easy to understand and learn.
-* Python has a lot of packages for machine learning and data processing with almost zero learning curve.
-
-The Python libraries I used are as follows:
-
-1. Tensorflow - the backend framework for Keras
-2. Keras - sequential deep learning model with LSTM, Dense, and GRU layers.
-3. NumPy - converts data into multidimensional arrays 
-4. Pandas - read csv files into data frames 
-5. Scikit-learn - uses MinMaxScaler to normalize input data
-6. Matplotlib - creates plot visualization of final stock predictions
-
-
-### Code Explained
-
-The following code imports all relevant libraries to the stock predict model.
-
-```
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-from keras.models import Sequential
-from keras.layers import LSTM,Dense, GRU
-from sklearn.preprocessing import MinMaxScaler
-import matplotlib.pyplot as plt
-from matplotlib.legend_handler import HandlerLine2D
-```
-
-The following code ensures results can be replicated by fixing the random seed number. 
-
-```
-np.random.seed(5)
-```
-
-The following code loads the dataset as a Pandas dataframe which is later transformed into a NumPy array.
-
-```python
-data = pd.read_csv('./data/' + symbol + '.csv')
-open2 = scale_data(data.Open)
-high = scale_data(data.High)
-low = scale_data(data.Low)
-volume = scale_data(data.Volume)
-adjclose = scale_data(data.AdjClose)
-dates = data.Date
-```
-
-The following code builds a LSTM model, with one input layer, one hidden layer containing 256 LSTM neurons, and one output layer with a single prediction value.
-
-```
-model = Sequential()
-model.add(LSTM(256,input_shape=(steps,num_input)))
-model.add(Dense(1))
-model.compile(optimizer='adam',loss='mse')
-```
-
-The following code trains the model.
-
-```python
-model.fit(X_train,y_train,epochs=10,validation_data=(X_test,y_test),shuffle=False)
-```
-
-The following code predicts the stock close price based on test data input.
-
-```python
-y_predicted = model.predict(X_test)
-```
-
-### Parameters
-
-The parameters that I used for the model are as follows:
-
-1. Num_input - The number of inputs I used in each run (i.e. close price)
-2. Steps - How many days in the past the model would use as input values to predict the following day’s close price
-3. Train_test_split_ratio - How much of the downloaded data would be used to train the model, and how much would be used for testing prediction 
-4. Num_layers - The number of layers the model used
-
 
 ### Results:
 
@@ -203,7 +112,7 @@ __Original Model: One input (Close price, using data from 20 days in the past); 
 ··* More information: Much of the deep learning technology we see makes use of numerous layers and neural networks to improve efficacy. I added a second LSTM layer to test this application within my model.
 ··* MAPE=1.10
 
-![Image](../blob/master/Plot_Graph.png?raw=true)
+![Image](https://github.com/emilylu1211/stock-predict/blob/master/Plot_Graph.png?raw=true)
 
 ### Conclusion
 
@@ -224,8 +133,12 @@ Alongside the proposed changes mentioned in the conclusion, edits to data size c
 
 ### References
 http://faroit.com/keras-docs/1.2.0/applications/
+
 https://towardsdatascience.com/a-quick-introduction-to-the-pandas-python-library-f1b678f34673
+
 https://keras.io/backend/
+
 https://blog.keras.io/keras-as-a-simplified-interface-to-tensorflow-tutorial.html
+
 http://benalexkeen.com/feature-scaling-with-scikit-learn/
 
